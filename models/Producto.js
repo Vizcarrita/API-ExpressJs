@@ -15,7 +15,8 @@ const ProductoSchema = Schema({
     },
     usuario:{
         type: Schema.Types.ObjectId,
-        ref: "Usuario"
+        ref: "Usuario",
+        require: true
     }
 });
 

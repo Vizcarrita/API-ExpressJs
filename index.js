@@ -29,6 +29,6 @@ app.get( "*", ( req, res ) => {
 });
 
 
-app.listen(4000, () => {
-    console.log("El servidor esta corriendo perfectamente")
+app.listen(process.env.PORT, () => {
+    console.log(`El servidor esta corriendo perfectamente en el puerto ${process.env.PORT}`);
 });

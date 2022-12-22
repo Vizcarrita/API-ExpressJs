@@ -14,12 +14,20 @@ const UsuarioSchema = Schema({
         type: String,
         requiere: true
     },
+    img:{
+        type: String,
+    },
     role:{
         type: String,
         require: true,
         default: "USER_ROLE"
-    }
+    },
     
 });
+
+UsuarioSchema.method('toJSON',function(){
+    const { __v, password, ...object } = this.toObject();
+    return object;
+})
 
 module.exports = model( "Usuario", UsuarioSchema );

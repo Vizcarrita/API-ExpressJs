@@ -1,11 +1,17 @@
+const { response } = require("express");
 const Producto = require("../models/Producto");
 
-const crearProducto = async(req, res) => {
+const crearProducto = async(req, res = response) => {
+
+    const uid = req.uid;
 
     try {
         let producto;
         //Creamos el producto
-        producto = new Producto(req.body);
+        producto = new Producto({
+            usuario: uid,
+            ...req.body
+        });
         await producto.save();
         res.send(producto)
 
@@ -18,18 +24,32 @@ const crearProducto = async(req, res) => {
     }
 }
 
-const obtenerProducto = async(req, res) => {
+const obtenerProducto = async(req, res = response) => {
+
+    const desde = Number (req.query.desde) || 0;
+
     try {
-        
-        const producto = await Producto.find();
-        res.json(producto)
+        const [producto,total] = await Promise.all([
+            Producto
+            .find({},'name categoria precio img')
+            .populate('usuario','name img')
+            .skip( desde )
+            .limit( 6 ),
+
+            Producto.countDocuments()
+        ]);
+
+        res.json({
+            ok:true,
+            producto,
+            total
+        })
 
     } catch (error) {
-        console.log(error);
         return res.status(500).json({
-            ok: false,
-            msg: "Comuniquese con el administrador",
-          });
+            ok:false,
+            msg:'Comuniquese con el administrador',
+        });
     }
 }
 

@@ -3,7 +3,25 @@ const Usuario = require("../models/Usuario");
 const bcrypt = require("bcryptjs");
 const { generarJWT } = require("../utilidades/jwt");
 
-const crearUsuario = async (req, res) => {
+
+const getUsuarios = async(req, res) => {
+  const desde = Number(req.query.desde) || 0;
+  const [ usuarios, total ] = await Promise.all([
+    Usuario
+    .find({}, 'name email role img')
+    .skip( desde )
+    .limit( 5 ),
+    Usuario.countDocuments()
+  ]);
+  res.json({
+    ok: true,
+    usuarios,
+    total
+  });
+}
+
+
+const crearUsuario = async (req, res = response) => {
   const { email, name, password } = req.body;
 
   try {
@@ -48,7 +66,7 @@ const crearUsuario = async (req, res) => {
   }
 };
 
-const loginUsuario = async (req, res) => {
+const loginUsuario = async (req, res = response) => {
   const { email, password } = req.body;
 
   try {
@@ -89,6 +107,51 @@ const loginUsuario = async (req, res) => {
   }
 };
 
+const actualizarUsuario = async(req, res = response) => {
+  const uid = req.params.id;
+  
+
+  try {
+    const usuarioDB = Usuario.findById( uid );
+    if(!usuarioDB){
+      return res.status(400).json({
+        ok:false,
+        msg:"No existe un usuario por ese id"
+      });
+    }
+    
+    const { password, email, ...campos} = req.body;
+
+    if(usuarioDB.email !== email){
+      const existeEmail = await Usuario.findOne({ email });
+      if( existeEmail ){
+        return res.status(400).json({
+          ok:false,
+          msg:"Ya existe un usuario con ese email"
+        });
+      }
+    }
+
+    campos.email = email;
+
+    // Actualizacion
+
+    const usuarioActualizado = await Usuario.findByIdAndUpdate( uid, campos, {new: true} );
+
+    res.json({
+      ok: true,
+      usuario: usuarioActualizado
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error inesperado"
+    })
+  }
+}
+
 const revalidaToken = async(req, res) => {
   const { uid } = req;
 
@@ -111,6 +174,8 @@ const revalidaToken = async(req, res) => {
 
 module.exports = {
   crearUsuario,
+  getUsuarios,
   loginUsuario,
+  actualizarUsuario,
   revalidaToken,
 };
